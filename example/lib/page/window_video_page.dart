@@ -109,8 +109,7 @@ class _WindowVideoPageState extends State<WindowVideoPage> {
           color: Colors.black,
           height: 240,
           child: Stack(
-            overflow: Overflow.visible,
-            alignment: Alignment.center,
+            clipBehavior: Clip.none, alignment: Alignment.center,
             children: <Widget>[
               /// 视频
               controller!.value.initialized

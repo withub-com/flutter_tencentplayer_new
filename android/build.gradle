@@ -35,12 +35,18 @@ android {
 
 }
 
+//自动导入libs目录下的所有aar文件
+fileTree(dir: 'libs', include: '**/*.aar').each { File file ->
+    dependencies.add("api", [name: file.name.lastIndexOf('.').with {
+        it != -1 ? file.name[0..<it] : file.name
+    }, ext                       : 'aar'])
+}
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation(name: 'LiteAVSDK_Player_9.2.10639', ext: 'aar')
-    implementation(name: 'libsuperplayer', ext: 'aar')
-// 超级播放器弹幕集成的第三方库
+//    implementation(name: 'LiteAVSDK_Player_9.2.10639', ext: 'aar')
+//    implementation(name: 'libsuperplayer', ext: 'aar')
+    // 超级播放器弹幕集成的第三方库
     implementation 'com.github.ctiao:DanmakuFlameMaster:0.5.3'
     androidTestImplementation 'androidx.test:runner:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'

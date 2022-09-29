@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tencentplayer/flutter_tencentplayer.dart';
 import 'package:flutter_tencentplayer_example/main.dart';
 import 'package:flutter_tencentplayer_example/page/index.dart';
-import 'package:image_picker/image_picker.dart';
+// import 'package:image_picker/image_picker.dart';
 
 class FileVideoPage extends StatefulWidget {
   @override
@@ -11,7 +11,7 @@ class FileVideoPage extends StatefulWidget {
 }
 
 class _FileVideoPageState extends State<FileVideoPage> {
-  ImagePicker picker = ImagePicker();
+  // ImagePicker picker = ImagePicker();
   TencentPlayerController? controller;
   VoidCallback? listener;
 
@@ -67,9 +67,9 @@ class _FileVideoPageState extends State<FileVideoPage> {
   }
 
   _select() async {
-    PickedFile file = await picker.getVideo(source: ImageSource.gallery);
-    print(file.path);
-    initPlayer(file.path);
+    // PickedFile file = await picker.getVideo(source: ImageSource.gallery);
+    // print(file.path);
+    // initPlayer(file.path);
   }
 
   void initPlayer(String path) {

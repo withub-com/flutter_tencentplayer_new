@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tencentplayer_example/page/index.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter_tencentplayer/flutter_tencentplayer.dart';
 import 'package:flutter_tencentplayer_example/main.dart';
 
@@ -38,12 +37,12 @@ class _DownloadPageState extends State<DownloadPage> {
   }
 
   _init() async {
-    Directory appDocDir = await getApplicationDocumentsDirectory();
-    String appDocPath = appDocDir.path;
-    _downloadController = DownloadController(appDocPath);
-    _downloadController!.addListener(downloadListener!);
-    setState(() {
-    });
+    // Directory appDocDir = await getApplicationDocumentsDirectory();
+    // String appDocPath = appDocDir.path;
+    // _downloadController = DownloadController(appDocPath);
+    // _downloadController!.addListener(downloadListener!);
+    // setState(() {
+    // });
   }
 
   @override

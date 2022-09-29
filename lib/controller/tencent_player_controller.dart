@@ -246,7 +246,7 @@ class _VideoAppLifeCycleObserver with WidgetsBindingObserver {
   _VideoAppLifeCycleObserver(this._controller);
 
   void initialize() {
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -266,6 +266,6 @@ class _VideoAppLifeCycleObserver with WidgetsBindingObserver {
   }
 
   void dispose() {
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
   }
 }

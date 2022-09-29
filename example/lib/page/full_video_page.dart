@@ -121,8 +121,7 @@ class _FullVideoPageState extends State<FullVideoPage> {
         child: Container(
           color: Colors.black,
           child: Stack(
-            overflow: Overflow.visible,
-            alignment: Alignment.center,
+            clipBehavior: Clip.none, alignment: Alignment.center,
             children: <Widget>[
               /// 视频
               controller!.value.initialized

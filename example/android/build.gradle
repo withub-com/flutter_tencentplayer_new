@@ -5,7 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.2.1'
+        classpath 'com.android.tools.build:gradle:4.1.2'
     }
 }
 
@@ -20,10 +20,13 @@ allprojects {
     repositories {
         google()
         jcenter()
+        mavenCentral()
         flatDir {
             dirs "${plugins.get("flutter_tencentplayer")}android/libs"
         }
-        maven { url 'http://download.flutter.io' }
+        maven {
+            allowInsecureProtocol = true
+            url 'http://download.flutter.io' }
     }
 }
 

@@ -49,8 +49,7 @@ class _TencentPlayerBottomWidgetState extends State<TencentPlayerBottomWidget> {
     return Offstage(
       offstage: !widget.isShow,
       child: Stack(
-        overflow: Overflow.visible,
-        children: <Widget>[
+        clipBehavior: Clip.none, children: <Widget>[
           Align(
             alignment: Alignment.bottomLeft,
             child: Container(
