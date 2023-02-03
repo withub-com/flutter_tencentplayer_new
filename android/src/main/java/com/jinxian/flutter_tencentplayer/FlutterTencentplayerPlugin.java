@@ -1,7 +1,7 @@
 package com.jinxian.flutter_tencentplayer;
 
+import android.app.Activity;
 import android.content.res.AssetManager;
-import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.LongSparseArray;
@@ -19,7 +19,9 @@ import io.flutter.view.FlutterNativeView;
 import io.flutter.view.TextureRegistry;
 
 
+import com.tencent.live2.V2TXLivePremier;
 import com.tencent.rtmp.ITXVodPlayListener;
+import com.tencent.rtmp.TXLiveBase;
 import com.tencent.rtmp.TXLiveConstants;
 import com.tencent.rtmp.TXPlayerAuthBuilder;
 import com.tencent.rtmp.TXVodPlayConfig;
@@ -53,7 +55,7 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
 
         private final TextureRegistry.SurfaceTextureEntry textureEntry;
 
-        private TencentQueuingEventSink eventSink = new TencentQueuingEventSink();
+        private TencentQueuingEventSink eventSink;
 
         private final EventChannel eventChannel;
 
@@ -67,11 +69,12 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
                 EventChannel eventChannel,
                 TextureRegistry.SurfaceTextureEntry textureEntry,
                 MethodCall call,
-                Result result) {
+                Result result, Activity activity) {
             this.eventChannel = eventChannel;
             this.textureEntry = textureEntry;
             this.mRegistrar = mRegistrar;
 
+            eventSink = new TencentQueuingEventSink(activity);
 
             mVodPlayer = new TXVodPlayer(mRegistrar.context());
 
@@ -167,7 +170,7 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
                 if (authMap.get("sign") != null) {
                     authBuilder.setSign(authMap.get("sign").toString());
                 }
-                mVodPlayer.startPlay(authBuilder);
+                mVodPlayer.startVodPlay(authBuilder);
             } else {
                 // asset播放
                 if (call.argument("asset") != null) {
@@ -189,7 +192,7 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
                         inputStream.close();
                         fileOutputStream.close();
 
-                        mVodPlayer.startPlay(file.getPath());
+                        mVodPlayer.startVodPlay(file.getPath());
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -201,7 +204,7 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
                         @Override
                         public void run() {
                             degree = Util.getNetworkVideoRotate(urlOrPath);
-                            mVodPlayer.startPlay(urlOrPath);
+                            mVodPlayer.startVodPlay(urlOrPath);
                         }
                     }).start();
 
@@ -306,7 +309,7 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
 
     ////////////////////  TencentDownload 开始/////////////////
     class TencentDownload implements ITXVodDownloadListener {
-        private TencentQueuingEventSink eventSink = new TencentQueuingEventSink();
+        private TencentQueuingEventSink eventSink;
 
         private final EventChannel eventChannel;
 
@@ -330,11 +333,11 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
                 Registrar mRegistrar,
                 EventChannel eventChannel,
                 MethodCall call,
-                Result result) {
+                Result result, Activity activity) {
             this.eventChannel = eventChannel;
             this.mRegistrar = mRegistrar;
 
-
+            eventSink = new TencentQueuingEventSink(activity);
             downloader = TXVodDownloadManager.getInstance();
             downloader.setListener(this);
             downloader.setDownloadPath(call.argument("savePath").toString());
@@ -431,12 +434,13 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
     private final Registrar registrar;
     private final LongSparseArray<TencentPlayer> videoPlayers;
     private final HashMap<String, TencentDownload> downloadManagerMap;
+    private Activity activity;
 
     private FlutterTencentplayerPlugin(Registrar registrar) {
+        this.activity = registrar.activity();
         this.registrar = registrar;
         this.videoPlayers = new LongSparseArray<>();
         this.downloadManagerMap = new HashMap<>();
-
 
     }
 
@@ -478,13 +482,13 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
                 EventChannel eventChannel = new EventChannel(registrar.messenger(), "flutter_tencentplayer/videoEvents" + handle.id());
 
 
-                TencentPlayer player = new TencentPlayer(registrar, eventChannel, handle, call, result);
+                TencentPlayer player = new TencentPlayer(registrar, eventChannel, handle, call, result, activity);
                 videoPlayers.put(handle.id(), player);
                 break;
             case "download":
                 String urlOrFileId = call.argument("urlOrFileId").toString();
                 EventChannel downloadEventChannel = new EventChannel(registrar.messenger(), "flutter_tencentplayer/downloadEvents" + urlOrFileId);
-                TencentDownload tencentDownload = new TencentDownload(registrar, downloadEventChannel, call, result);
+                TencentDownload tencentDownload = new TencentDownload(registrar, downloadEventChannel, call, result, activity);
 
                 downloadManagerMap.put(urlOrFileId, tencentDownload);
                 break;

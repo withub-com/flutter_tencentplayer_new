@@ -1,5 +1,7 @@
 package com.jinxian.flutter_tencentplayer;
 
+import android.app.Activity;
+
 import java.util.ArrayList;
 
 import io.flutter.plugin.common.EventChannel;
@@ -17,6 +19,11 @@ final class TencentQueuingEventSink implements EventChannel.EventSink {
   private EventChannel.EventSink delegate;
   private ArrayList<Object> eventQueue = new ArrayList<>();
   private boolean done = false;
+
+  private Activity activity;
+  public TencentQueuingEventSink(Activity activity) {
+    this.activity = activity;
+  }
 
   public void setDelegate(EventChannel.EventSink delegate) {
     this.delegate = delegate;
@@ -60,7 +67,12 @@ final class TencentQueuingEventSink implements EventChannel.EventSink {
         ErrorEvent errorEvent = (ErrorEvent) event;
         delegate.error(errorEvent.code, errorEvent.message, errorEvent.details);
       } else {
-        delegate.success(event);
+        activity.runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            delegate.success(event);
+          }
+        });
       }
     }
     eventQueue.clear();

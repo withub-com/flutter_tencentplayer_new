@@ -8,7 +8,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.3.0'
+        classpath 'com.android.tools.build:gradle:7.1.2'
     }
 }
 
@@ -47,6 +47,7 @@ dependencies {
 //    implementation(name: 'LiteAVSDK_Player_9.2.10639', ext: 'aar')
 //    implementation(name: 'libsuperplayer', ext: 'aar')
     // 超级播放器弹幕集成的第三方库
+    implementation 'com.tencent.liteav:LiteAVSDK_Professional:10.8.0.13065'
     implementation 'com.github.ctiao:DanmakuFlameMaster:0.5.3'
     androidTestImplementation 'androidx.test:runner:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
