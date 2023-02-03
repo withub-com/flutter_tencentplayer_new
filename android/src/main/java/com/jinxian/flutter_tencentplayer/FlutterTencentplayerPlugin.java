@@ -3,25 +3,32 @@ package com.jinxian.flutter_tencentplayer;
 import android.app.Activity;
 import android.content.res.AssetManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Base64;
+import android.util.Log;
 import android.util.LongSparseArray;
 import android.view.OrientationEventListener;
 import android.view.Surface;
 
+import androidx.annotation.NonNull;
+
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.plugin.common.EventChannel;
-import io.flutter.plugin.common.PluginRegistry;
-import io.flutter.view.FlutterNativeView;
 import io.flutter.view.TextureRegistry;
 
 
 import com.tencent.live2.V2TXLivePremier;
 import com.tencent.rtmp.ITXVodPlayListener;
 import com.tencent.rtmp.TXLiveBase;
+import com.tencent.rtmp.TXLiveBaseListener;
 import com.tencent.rtmp.TXLiveConstants;
 import com.tencent.rtmp.TXPlayerAuthBuilder;
 import com.tencent.rtmp.TXVodPlayConfig;
@@ -35,14 +42,37 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 
 /**
  * FlutterTencentplayerPlugin
  */
-public class FlutterTencentplayerPlugin implements MethodCallHandler {
+public class FlutterTencentplayerPlugin implements FlutterPlugin, MethodCallHandler, ActivityAware {
+    private static final String PLUGIN_NAME = "flutter_tencentplayer";
+
+    @Override
+    public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
+        activity = binding.getActivity();
+    }
+
+    @Override
+    public void onDetachedFromActivityForConfigChanges() {
+
+    }
+
+    @Override
+    public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
+
+    }
+
+    @Override
+    public void onDetachedFromActivity() {
+        activity = null;
+    }
 
     ///////////////////// TencentPlayer 开始////////////////////
 
@@ -59,24 +89,24 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
 
         private final EventChannel eventChannel;
 
-        private final Registrar mRegistrar;
+        private final FlutterPluginBinding flutterPluginBinding;
 
         private OrientationEventListener orientationEventListener;
 
 
         TencentPlayer(
-                Registrar mRegistrar,
+                FlutterPluginBinding flutterPluginBinding,
                 EventChannel eventChannel,
                 TextureRegistry.SurfaceTextureEntry textureEntry,
                 MethodCall call,
                 Result result, Activity activity) {
             this.eventChannel = eventChannel;
             this.textureEntry = textureEntry;
-            this.mRegistrar = mRegistrar;
+            this.flutterPluginBinding = flutterPluginBinding;
 
             eventSink = new TencentQueuingEventSink(activity);
 
-            mVodPlayer = new TXVodPlayer(mRegistrar.context());
+            mVodPlayer = new TXVodPlayer(flutterPluginBinding.getApplicationContext());
 
             setPlayConfig(call);
 
@@ -91,7 +121,7 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
         }
 
         private void setOrientationEventListener() {
-            orientationEventListener = new OrientationEventListener(mRegistrar.context()) {
+            orientationEventListener = new OrientationEventListener(flutterPluginBinding.getApplicationContext()) {
                 @Override
                 public void onOrientationChanged(int orientation) {
                     if (orientation == OrientationEventListener.ORIENTATION_UNKNOWN) {
@@ -174,11 +204,11 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
             } else {
                 // asset播放
                 if (call.argument("asset") != null) {
-                    String assetLookupKey = mRegistrar.lookupKeyForAsset(call.argument("asset").toString());
-                    AssetManager assetManager = mRegistrar.context().getAssets();
+                    String assetLookupKey = flutterPluginBinding.getFlutterAssets().getAssetFilePathByName(call.argument("asset").toString());
+                    AssetManager assetManager = flutterPluginBinding.getApplicationContext().getAssets();
                     try {
                         InputStream inputStream = assetManager.open(assetLookupKey);
-                        String cacheDir = mRegistrar.context().getCacheDir().getAbsoluteFile().getPath();
+                        String cacheDir = flutterPluginBinding.getApplicationContext().getCacheDir().getAbsoluteFile().getPath();
                         String fileName = Base64.encodeToString(assetLookupKey.getBytes(), Base64.DEFAULT);
                         File file = new File(cacheDir, fileName + ".mp4");
                         FileOutputStream fileOutputStream = new FileOutputStream(file);
@@ -313,7 +343,7 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
 
         private final EventChannel eventChannel;
 
-        private final Registrar mRegistrar;
+        private final FlutterPluginBinding flutterPluginBinding;
 
         private String fileId;
 
@@ -330,12 +360,12 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
 
 
         TencentDownload(
-                Registrar mRegistrar,
+                FlutterPluginBinding flutterPluginBinding,
                 EventChannel eventChannel,
                 MethodCall call,
                 Result result, Activity activity) {
             this.eventChannel = eventChannel;
-            this.mRegistrar = mRegistrar;
+            this.flutterPluginBinding = flutterPluginBinding;
 
             eventSink = new TencentQueuingEventSink(activity);
             downloader = TXVodDownloadManager.getInstance();
@@ -431,64 +461,91 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
     }
 
     ////////////////////  TencentDownload 结束/////////////////
-    private final Registrar registrar;
-    private final LongSparseArray<TencentPlayer> videoPlayers;
-    private final HashMap<String, TencentDownload> downloadManagerMap;
+    private LongSparseArray<TencentPlayer> videoPlayers;
+    private HashMap<String, TencentDownload> downloadManagerMap;
     private Activity activity;
+    private MethodChannel mMethodChannel;
+    private Handler mHandler;
+    private FlutterPlugin.FlutterPluginBinding flutterPluginBinding;
 
-    private FlutterTencentplayerPlugin(Registrar registrar) {
-        this.activity = registrar.activity();
-        this.registrar = registrar;
+//    private FlutterTencentplayerPlugin(Registrar registrar) {
+//        this.activity = registrar.activity();
+//        this.registrar = registrar;
+//        this.videoPlayers = new LongSparseArray<>();
+//        this.downloadManagerMap = new HashMap<>();
+//
+//    }
+
+    //此处是新的插件加载注册方式
+    @Override
+    public void onAttachedToEngine(@NonNull FlutterPlugin.FlutterPluginBinding flutterPluginBinding) {
+        this.flutterPluginBinding = flutterPluginBinding;
+        mMethodChannel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), PLUGIN_NAME);
+        mMethodChannel.setMethodCallHandler(this);
         this.videoPlayers = new LongSparseArray<>();
         this.downloadManagerMap = new HashMap<>();
-
-    }
-
-
-    /**
-     * Plugin registration.
-     */
-    public static void registerWith(Registrar registrar) {
-        final MethodChannel channel = new MethodChannel(registrar.messenger(), "flutter_tencentplayer");
-        final FlutterTencentplayerPlugin plugin = new FlutterTencentplayerPlugin(registrar);
-
-        channel.setMethodCallHandler(plugin);
-
-        registrar.addViewDestroyListener(
-                new PluginRegistry.ViewDestroyListener() {
-                    @Override
-                    public boolean onViewDestroy(FlutterNativeView flutterNativeView) {
-                        plugin.onDestroy();
-                        return false;
-                    }
-                }
-        );
+        mHandler = new UIHandler(this);
     }
 
     @Override
+    public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
+
+    }
+
+
+//    /**
+//     * Plugin registration.
+//     */
+//    public static void registerWith(Registrar registrar) {
+//        final MethodChannel channel = new MethodChannel(registrar.messenger(), "flutter_tencentplayer");
+//        final FlutterTencentplayerPlugin plugin = new FlutterTencentplayerPlugin(registrar);
+//
+//        channel.setMethodCallHandler(plugin);
+//
+//        registrar.addViewDestroyListener(
+//                new PluginRegistry.ViewDestroyListener() {
+//                    @Override
+//                    public boolean onViewDestroy(FlutterNativeView flutterNativeView) {
+//                        plugin.onDestroy();
+//                        return false;
+//                    }
+//                }
+//        );
+//    }
+
+    @Override
     public void onMethodCall(MethodCall call, Result result) {
-        TextureRegistry textures = registrar.textures();
+        TextureRegistry textures = flutterPluginBinding.getTextureRegistry();
         if (call.method.equals("getPlatformVersion")) {
             result.success("Android " + android.os.Build.VERSION.RELEASE);
         }
 
         switch (call.method) {
+            case "setLicence":
+//                String url = "https://license.vod2.myqcloud.com/license/v2/1306302267_1/v_cube.license";
+//                String key = "b5f05b3a3b30154599e354f2a3efdd7b";
+                String url = call.argument("host");
+                String key = call.argument("port");
+                V2TXLivePremier.setLicence(flutterPluginBinding.getApplicationContext(), url, key);
+                TXLiveBase.setListener(new TXLiveBaseListenerImpl());
+                result.success(0);
+                break;
             case "init":
                 disposeAllPlayers();
                 break;
             case "create":
                 TextureRegistry.SurfaceTextureEntry handle = textures.createSurfaceTexture();
 
-                EventChannel eventChannel = new EventChannel(registrar.messenger(), "flutter_tencentplayer/videoEvents" + handle.id());
+                EventChannel eventChannel = new EventChannel(flutterPluginBinding.getBinaryMessenger(), "flutter_tencentplayer/videoEvents" + handle.id());
 
 
-                TencentPlayer player = new TencentPlayer(registrar, eventChannel, handle, call, result, activity);
+                TencentPlayer player = new TencentPlayer(flutterPluginBinding, eventChannel, handle, call, result, activity);
                 videoPlayers.put(handle.id(), player);
                 break;
             case "download":
                 String urlOrFileId = call.argument("urlOrFileId").toString();
-                EventChannel downloadEventChannel = new EventChannel(registrar.messenger(), "flutter_tencentplayer/downloadEvents" + urlOrFileId);
-                TencentDownload tencentDownload = new TencentDownload(registrar, downloadEventChannel, call, result, activity);
+                EventChannel downloadEventChannel = new EventChannel(flutterPluginBinding.getBinaryMessenger(), "flutter_tencentplayer/downloadEvents" + urlOrFileId);
+                TencentDownload tencentDownload = new TencentDownload(flutterPluginBinding, downloadEventChannel, call, result, activity);
 
                 downloadManagerMap.put(urlOrFileId, tencentDownload);
                 break;
@@ -509,6 +566,41 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
                 onMethodCall(call, result, textureId, tencentPlayer);
                 break;
 
+        }
+    }
+
+    class TXLiveBaseListenerImpl extends TXLiveBaseListener {
+
+        @Override
+        public void onLog(int level, String module, String log) {
+            Map map = new HashMap();
+            map.put("level", level);
+            map.put("log", log);
+            invokeListener(TXLivePluginDef.V2TXLivePremierObserverType.getByName("onLog"), map);
+        }
+
+        @Override
+        public void onLicenceLoaded(int result, String reason) {
+            Map map = new HashMap();
+            map.put("result", result);
+            map.put("reason", reason);
+            invokeListener(TXLivePluginDef.V2TXLivePremierObserverType.getByName("onLicenceLoaded"), map);
+        }
+
+        public void invokeListener(TXLivePluginDef.V2TXLivePremierObserverType type, Map map) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Map resultParams = new HashMap();
+                    resultParams.put("type", type.getName());
+                    if (map != null) {
+                        resultParams.put("params", map);
+                    }
+                    if (mMethodChannel != null) {
+                        mMethodChannel.invokeMethod("onPremierListener", resultParams);
+                    }
+                }
+            });
         }
     }
 
@@ -550,6 +642,17 @@ public class FlutterTencentplayerPlugin implements MethodCallHandler {
 
     }
 
+    static class UIHandler extends Handler {
+        WeakReference<FlutterTencentplayerPlugin> pluginReference;
+
+        public UIHandler(FlutterTencentplayerPlugin plugin) {
+            pluginReference = new WeakReference<>(plugin);
+        }
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+        }
+    }
 
     private void disposeAllPlayers() {
         for (int i = 0; i < videoPlayers.size(); i++) {
