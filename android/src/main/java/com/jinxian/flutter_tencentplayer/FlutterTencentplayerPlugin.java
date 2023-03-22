@@ -521,12 +521,12 @@ public class FlutterTencentplayerPlugin implements FlutterPlugin, MethodCallHand
         }
 
         switch (call.method) {
-            case "setLicence":
+            case "setGlobalLicense":
 //                String url = "https://license.vod2.myqcloud.com/license/v2/1306302267_1/v_cube.license";
 //                String key = "b5f05b3a3b30154599e354f2a3efdd7b";
-                String url = call.argument("host");
-                String key = call.argument("port");
-                V2TXLivePremier.setLicence(flutterPluginBinding.getApplicationContext(), url, key);
+                String licenceUrl = call.argument("licenceUrl");
+                String licenceKey = call.argument("licenceKey");
+                V2TXLivePremier.setLicence(flutterPluginBinding.getApplicationContext(), licenceUrl, licenceKey);
                 TXLiveBase.setListener(new TXLiveBaseListenerImpl());
                 result.success(0);
                 break;

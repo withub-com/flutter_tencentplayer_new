@@ -6,3 +6,5 @@ export 'controller/download_controller.dart';
 export 'controller/tencent_player_controller.dart';
 
 export 'package:flutter_tencentplayer/view/tencent_player.dart';
+
+export 'package:flutter_tencentplayer/super_player_plugin.dart';
