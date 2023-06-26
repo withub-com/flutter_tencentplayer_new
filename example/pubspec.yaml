@@ -25,7 +25,7 @@ dev_dependencies:
       url: git@github.com:forgetW/flutter_forbidshot.git
   screen:
     git:
-      url: https://github.com/forgetW/flutter_screen.git
+      url: git@github.com:forgetW/flutter_screen.git
 #  path_provider: 1.5.0
 #  image_picker: 0.6.7+7
 

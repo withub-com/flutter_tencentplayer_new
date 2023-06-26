@@ -81,7 +81,9 @@ final class TencentQueuingEventSink implements EventChannel.EventSink {
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        delegate.success(event);
+                        if(delegate != null){
+                            delegate.success(event);
+                        }
                     }
                 });
 //                activity.runOnUiThread(new Runnable() {
