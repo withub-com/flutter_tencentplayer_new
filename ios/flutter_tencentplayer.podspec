@@ -16,7 +16,7 @@ A new Flutter plugin.
   s.public_header_files = 'Classes/**/*.h'
   s.dependency 'Flutter'
   # s.dependency 'TXLiteAVSDK_Player'
-  s.dependency 'TXLiteAVSDK_Player', '= 9.2.10637'
+  s.dependency 'TXLiteAVSDK_Player', '= 11.4.14445'
   s.user_target_xcconfig = { 'CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES' => 'YES' }
   s.static_framework = true
   s.ios.deployment_target = '8.0'
