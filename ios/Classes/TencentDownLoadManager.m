@@ -37,7 +37,7 @@
     //设置下载对象
     NSLog(@"开始下载");
     if([_urlOrFileId hasPrefix: @"http"]){
-       _tempMedia = [_tXVodDownloadManager startDownloadUrl:_urlOrFileId];
+       _tempMedia = [_tXVodDownloadManager startDownloadUrl:_urlOrFileId resolution:-1 userName:@"default"];
     }else{
         NSDictionary* argsMap = _call.arguments;
         int appId = [argsMap[@"appId"] intValue];

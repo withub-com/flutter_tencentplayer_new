@@ -88,7 +88,7 @@
     if(pathArg!=nil&&pathArg!=NULL&&![@"" isEqualToString:pathArg]&&pathArg!=[NSNull null]){
         NSLog(@"播放器启动方式1  play");
         _degree = [NSNumber numberWithInteger:[self degressFromVideoFileWithURL: pathArg]];
-        [_txPlayer startPlay:pathArg];
+        [_txPlayer startVodPlay:pathArg];
     }else{
         NSLog(@"播放器启动方式2  fileid");
         id auth = argsMap[@"auth"];
@@ -103,7 +103,7 @@
             if (sign != nil) {
                 p.sign = sign;
             }
-            [_txPlayer startPlayWithParams:p];
+            [_txPlayer startVodPlayWithParams:p];
         }
     }
     NSLog(@"播放器初始化结束");
